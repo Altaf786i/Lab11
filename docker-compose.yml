@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - net1
+      - net2
+
+  backend:
+    build: 
+      context: ./server
+    container_name: notes-backend
+    restart: always
+    ports:
+      - "5000:5000"
+    env_file: .env
+    depends_on:
+      - mongodb
+    networks:
+      - net1
+      - net2
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - VITE_APP_API_URL=${VITE_APP_API_URL}
+    container_name: notes-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - net1
+      - net2
+
+networks:
+  net1:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.100.0/24
+  net2:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.200.0/24
+
+volumes:
+  mongodb_data: 
